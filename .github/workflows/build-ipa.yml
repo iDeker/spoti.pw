@@ -1,5 +1,5 @@
 ```yaml
-name: Build IPA from Spotify Release
+name: Builds IPA from Spotify Release
 
 on:
   workflow_dispatch:
