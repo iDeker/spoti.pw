@@ -49,54 +49,35 @@ jobs:
           python3 -m pip install --break-system-packages \
             git+https://github.com/asdfzxcvbn/pyzule-rw.git
 
-      - name: Get release information
-        id: release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.release_tag }}
-        run: |
-          set -e
-
-          gh release view "$TAG" \
-            --json assets \
-            --jq '.assets[] | "\(.name)\t\(.url)"' \
-            > release-assets.txt
-
-          echo "Release assets:"
-          cat release-assets.txt
-
       - name: Download Spotify IPA
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.release_tag }}
-          IPA_ASSET: ${{ inputs.ipa_asset }}
         run: |
           set -e
 
           mkdir -p ipa
 
-          echo "Downloading $IPA_ASSET from release $TAG..."
-
-          gh release download "$TAG" \
-            --pattern "$IPA_ASSET" \
+          gh release download "${{ inputs.release_tag }}" \
+            --pattern "${{ inputs.ipa_asset }}" \
             --dir ipa
 
-          if [ ! -f "ipa/$IPA_ASSET" ]; then
-            echo "::error::Could not find ipa/$IPA_ASSET"
+          if [ ! -f "ipa/${{ inputs.ipa_asset }}" ]; then
+            echo "::error::IPA was not downloaded"
             exit 1
           fi
 
-          echo "Downloaded:"
-          ls -lh "ipa/$IPA_ASSET"
+          echo "Downloaded IPA:"
+          ls -lh "ipa/${{ inputs.ipa_asset }}"
 
           echo "Checking IPA..."
 
-          FILE_TYPE="$(file --mime-type -b "ipa/$IPA_ASSET")"
-          echo "Detected MIME type: $FILE_TYPE"
+          FILE_TYPE=$(file --mime-type -b "ipa/${{ inputs.ipa_asset }}")
+
+          echo "MIME type: $FILE_TYPE"
 
           case "$FILE_TYPE" in
             application/zip|application/x-ios-app)
-              echo "IPA looks valid."
+              echo "IPA check passed."
               ;;
             *)
               echo "::error::Downloaded file is not recognised as an IPA"
